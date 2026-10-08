@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Kamera Benar/Salah - Limbah B3 SMK</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#111827',
+                            card: '#1F2937',
+                            accent: '#10B981', // Emerald green
+                            warning: '#F59E0B', // Caution Amber
+                            danger: '#EF4444', // Red
+                            info: '#3B82F6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Styling & Canvas Overlays */
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+        }
+        .mirror {
+            transform: scaleX(-1);
+        }
+        .pulse-border {
+            animation: pulse-border-anim 2s infinite;
+        }
+        @keyframes pulse-border-anim {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+            70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between font-sans antialiased selection:bg-brand-accent selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/30">
+                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        ECO-B3 <span class="text-xs bg-emerald-500 text-slate-950 font-extrabold px-2 py-0.5 rounded-full">EDUKASI SMK</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Game Interaktif Kamera & Deteksi Limbah B3</p>
+                </div>
+            </div>
+
+            <!-- Header Quick Stats / Controls -->
+            <div class="flex items-center space-x-4">
+                <button id="soundToggleBtn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm flex items-center gap-2 transition">
+                    <i id="soundIcon" class="fa-solid fa-volume-high"></i> <span class="hidden sm:inline">Suara</span>
+                </button>
+                <button onclick="showLeaderboardModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 text-sm flex items-center gap-2 transition border border-amber-500/20">
+                    <i class="fa-solid fa-trophy"></i> <span class="hidden sm:inline">Papan Skor</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto w-full p-4 md:p-6 flex-grow flex flex-col justify-center">
+
+        <!-- VIEW 1: LANDING & SETUP PAGE -->
+        <section id="landingView" class="space-y-8 my-auto">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold tracking-wide">
+                    <i class="fa-solid fa-graduation-cap"></i> Media Pembelajaran Interaktif 36 Siswa SMK
+                </div>
+                <h2 class="text-3xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                    Uji Pengetahuan <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-amber-300 to-amber-500">Limbah B3</span> Secara Real-Time
+                </h2>
+                <p class="text-slate-400 text-sm md:text-base leading-relaxed">
+                    Pahami Pengertian, Klasifikasi Sumber, Simbol Bahaya, hingga Alur Pengolahan Limbah B3 sesuai regulasi lingkungan hidup. Mainkan menggunakan respon gerak Kamera atau Mode Kelas!
+                </p>
+            </div>
+
+            <!-- Setup Form Card -->
+            <div class="max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl"></div>
+
+                <form id="setupForm" onsubmit="startGame(event)" class="space-y-6 relative z-10">
+                    <!-- Player / Student Identity -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            <i class="fa-solid fa-user-pen mr-1 text-emerald-400"></i> Nama Siswa / Kelompok
+                        </label>
+                        <input type="text" id="playerName" required placeholder="Contoh: Siswa 01 / Kelompok A" 
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition">
+                    </div>
+
+                    <!-- Mode Selection -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                            <i class="fa-solid fa-gamepad mr-1 text-emerald-400"></i> Pilih Mode Permainan
+                        </label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Camera Mode -->
+                            <label class="relative flex flex-col p-4 bg-slate-950 border-2 border-slate-800 rounded-xl cursor-pointer hover:border-emerald-500/50 transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-950/20">
+                                <input type="radio" name="gameMode" value="camera" checked class="sr-only">
+                                <div class="flex items-center justify-between mb-2">
+                                    <i class="fa-solid fa-camera text-2xl text-emerald-400"></i>
+                                    <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-bold">Interaktif</span>
+                                </div>
+                                <span class="font-bold text-sm text-white">Mode WebCam</span>
+                                <span class="text-xs text-slate-400 mt-1">Gunakan gerakan posisi kepala/tangan di area kamera (Kanan=BENAR, Kiri=SALAH)</span>
+                            </label>
+
+                            <!-- Class/Manual Mode -->
+                            <label class="relative flex flex-col p-4 bg-slate-950 border-2 border-slate-800 rounded-xl cursor-pointer hover:border-amber-500/50 transition has-[:checked]:border-amber-500 has-[:checked]:bg-amber-950/20">
+                                <input type="radio" name="gameMode" value="manual" class="sr-only">
+                                <div class="flex items-center justify-between mb-2">
+                                    <i class="fa-solid fa-users text-2xl text-amber-400"></i>
+                                    <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded font-bold">Layar Proyektor</span>
+                                </div>
+                                <span class="font-bold text-sm text-white">Mode Kelas / Manual</span>
+                                <span class="text-xs text-slate-400 mt-1">Klik tombol langsung di layar. Sangat responsif untuk digunakan bersama kelas</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-bold py-4 rounded-xl shadow-lg shadow-emerald-500/20 transition duration-200 flex items-center justify-center gap-2 text-base">
+                        <i class="fa-solid fa-play"></i> Mulai Simulasi Kuiz B3
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- VIEW 2: ACTIVE GAMEPLAY SCREEN -->
+        <section id="gameView" class="hidden space-y-6">
+            <!-- Top Dashboard Bar -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl flex items-center space-x-3">
+                    <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><i class="fa-solid fa-user"></i></div>
+                    <div>
+                        <div class="text-xs text-slate-400">Pemain / Siswa</div>
+                        <div id="displayPlayerName" class="font-bold text-sm text-white truncate max-w-[120px]">-</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl flex items-center space-x-3">
+                    <div class="p-2 bg-amber-500/10 text-amber-400 rounded-lg"><i class="fa-solid fa-list-check"></i></div>
+                    <div>
+                        <div class="text-xs text-slate-400">Kemajuan Soal</div>
+                        <div id="displayProgress" class="font-bold text-sm text-white">Soal 1 / 15</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl flex items-center space-x-3">
+                    <div class="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><i class="fa-solid fa-star"></i></div>
+                    <div>
+                        <div class="text-xs text-slate-400">Skor Total</div>
+                        <div id="displayScore" class="font-bold text-sm text-white">0 Poin</div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-xl flex items-center space-x-3">
+                    <div class="p-2 bg-rose-500/10 text-rose-400 rounded-lg"><i class="fa-solid fa-clock"></i></div>
+                    <div class="w-full">
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>Sisa Waktu</span>
+                            <span id="timerText" class="font-bold text-rose-400">15s</span>
+                        </div>
+                        <div class="w-full bg-slate-800 h-2 rounded-full mt-1 overflow-hidden">
+                            <div id="timerBar" class="bg-rose-500 h-full w-full transition-all duration-1000 linear"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Card & Interactive Area Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                
+                <!-- Left/Main Column: Question & Controls -->
+                <div class="lg:col-span-7 flex flex-col justify-between bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl relative min-h-[380px]">
+                    <div>
+                        <!-- Category Tag -->
+                        <div class="flex items-center justify-between mb-4">
+                            <span id="questionCategory" class="px-3 py-1 bg-slate-800 text-amber-400 text-xs font-semibold rounded-full border border-amber-500/20">
+                                Kat: General
+                            </span>
+                            <span id="difficultyTag" class="text-xs text-slate-400"><i class="fa-solid fa-layer-group"></i> Tingkat SMK</span>
+                        </div>
+
+                        <!-- Question Statement -->
+                        <div class="my-4">
+                            <h3 id="questionText" class="text-xl md:text-2xl font-bold text-white leading-relaxed">
+                                Loading pertanyaan...
+                            </h3>
+                        </div>
+
+                        <!-- Optional Symbol Image / Diagram Box -->
+                        <div id="symbolBox" class="hidden my-4 p-4 bg-slate-950 rounded-xl border border-slate-800 flex flex-col items-center justify-center">
+                            <div id="symbolIconContainer" class="text-6xl mb-2 text-amber-400"></div>
+                            <span id="symbolCaption" class="text-xs text-slate-400 italic">Simbol Limbah B3</span>
+                        </div>
+                    </div>
+
+                    <!-- Answer Options / Manual Game Buttons -->
+                    <div id="manualButtonsContainer" class="grid grid-cols-2 gap-4 mt-6">
+                        <button onclick="submitAnswer(false)" class="py-4 px-6 bg-rose-600/20 hover:bg-rose-600/30 border-2 border-rose-500/50 hover:border-rose-500 text-rose-300 font-bold rounded-xl flex items-center justify-center gap-3 transition transform active:scale-95 text-lg">
+                            <i class="fa-solid fa-xmark text-2xl text-rose-400"></i> SALAH
+                        </button>
+                        <button onclick="submitAnswer(true)" class="py-4 px-6 bg-emerald-600/20 hover:bg-emerald-600/30 border-2 border-emerald-500/50 hover:border-emerald-500 text-emerald-300 font-bold rounded-xl flex items-center justify-center gap-3 transition transform active:scale-95 text-lg">
+                            <i class="fa-solid fa-check text-2xl text-emerald-400"></i> BENAR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Column: Camera Monitor View (Visible when Camera Mode active) -->
+                <div id="cameraViewContainer" class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between min-h-[320px]">
+                    <div class="relative w-full h-64 bg-slate-950 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center">
+                        <video id="webcamVideo" autoplay playsinline class="w-full h-full object-cover mirror"></video>
+                        <canvas id="motionCanvas" class="absolute inset-0 w-full h-full pointer-events-none mirror"></canvas>
+
+                        <!-- Camera Screen Overlay Targets -->
+                        <div id="cameraOverlay" class="absolute inset-0 flex justify-between pointer-events-none opacity-80">
+                            <!-- Left Zone: SALAH -->
+                            <div id="leftZone" class="w-1/2 h-full border-r-2 border-dashed border-rose-500/40 bg-rose-500/5 flex flex-col items-center justify-center p-2 text-center transition duration-200">
+                                <span class="text-rose-400 text-xs font-bold uppercase tracking-wider mb-1">Arahkan Kiri</span>
+                                <span class="bg-rose-500 text-slate-950 font-black px-2 py-1 rounded text-xs">SALAH</span>
+                            </div>
+                            <!-- Right Zone: BENAR -->
+                            <div id="rightZone" class="w-1/2 h-full bg-emerald-500/5 flex flex-col items-center justify-center p-2 text-center transition duration-200">
+                                <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">Arahkan Kanan</span>
+                                <span class="bg-emerald-500 text-slate-950 font-black px-2 py-1 rounded text-xs">BENAR</span>
+                            </div>
+                        </div>
+
+                        <!-- Motion Meter Overlay -->
+                        <div class="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-lg text-xs flex justify-between items-center text-slate-300">
+                            <span>Status Sensor: <strong id="sensorStatus" class="text-emerald-400">Aktif</strong></span>
+                            <span id="motionDetectorVal">Sinyal: -</span>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-slate-400 mt-3 text-center leading-relaxed">
+                        <i class="fa-solid fa-circle-info text-amber-400 mr-1"></i>
+                        Posisikan badan/tangan di area <strong>Kiri (SALAH)</strong> atau <strong>Kanan (BENAR)</strong> pada monitor video untuk menjawab.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 3: EXPLANATION FEEDBACK MODAL / OVERLAY -->
+        <div id="feedbackModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5 transform transition-all">
+                <div class="flex items-center space-x-3">
+                    <div id="feedbackIconBox" class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold">
+                        <i id="feedbackIcon" class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <h4 id="feedbackTitle" class="text-lg font-bold text-white">Jawaban Tepat!</h4>
+                        <p id="feedbackSubtitle" class="text-xs text-slate-400">Hasil Evaluasi Pertanyaan B3</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-sm text-slate-300 leading-relaxed" id="feedbackExplanation">
+                    Penjelasan materi akan tampil di sini.
+                </div>
+
+                <button onclick="nextQuestion()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                    Lanjut Soal Berikutnya <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW 4: FINAL RESULTS / RAPOR NILAI -->
+        <section id="resultView" class="hidden space-y-6 max-w-3xl mx-auto my-auto w-full">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl text-center space-y-6">
+                <div class="w-20 h-20 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-4xl mx-auto border border-amber-500/30">
+                    <i class="fa-solid fa-award"></i>
+                </div>
+
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-white">Rapor Evaluasi Limbah B3</h2>
+                    <p class="text-slate-400 text-sm mt-1">Hasil Akhir Permainan Interaktif</p>
+                </div>
+
+                <!-- Final Score Stats Card -->
+                <div class="grid grid-cols-3 gap-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                    <div>
+                        <div class="text-xs text-slate-400">Siswa</div>
+                        <div id="finalPlayerName" class="font-bold text-white text-sm truncate">-</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">Skor Akhir</div>
+                        <div id="finalScore" class="font-black text-emerald-400 text-xl">0</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-slate-400">Akurasi</div>
+                        <div id="finalAccuracy" class="font-bold text-amber-400 text-sm">0%</div>
+                    </div>
+                </div>
+
+                <!-- Grade / Assessment Box -->
+                <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700 text-left">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tingkat Pemahaman Limbah B3:</h4>
+                    <div id="gradeBadge" class="text-base font-bold text-emerald-400 mb-2">Memenuhi Kualifikasi Teknik Lingkungan</div>
+                    <p id="gradeDesc" class="text-xs text-slate-300 leading-relaxed">
+                        Siswa memahami secara menyeluruh konsep dasar limbah B3, penggolongan sumber, serta prosedur pengelolaannya.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button onclick="restartGame()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> Main Lagi / Siswa Berikutnya
+                    </button>
+                    <button onclick="showLeaderboardModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3.5 rounded-xl transition flex items-center justify-center gap-2 border border-slate-700">
+                        <i class="fa-solid fa-trophy text-amber-400"></i> Lihat Leaderboard Kelas
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- LEADERBOARD MODAL -->
+    <div id="leaderboardModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <i class="fa-solid fa-trophy text-amber-400"></i> Papan Skor Kelas (36 Siswa)
+                </h3>
+                <button onclick="closeLeaderboardModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="max-h-64 overflow-y-auto space-y-2 pr-1" id="leaderboardList">
+                <!-- Leaderboard Item Dynamic -->
+                <p class="text-xs text-slate-500 text-center py-4">Belum ada skor tersimpan.</p>
+            </div>
+
+            <button onclick="clearLeaderboard()" class="w-full text-xs text-rose-400 hover:text-rose-300 py-2">
+                <i class="fa-solid fa-trash mr-1"></i> Reset Data Papan Skor
+            </button>
+        </div>
+    </div>
+
+    <footer class="bg-slate-900 border-t border-slate-800 py-3 px-4 text-center text-xs text-slate-500">
+        Game Pembelajaran SMK Limbah B3 &copy; 2026 - Berdasarkan Regulasi PP No. 22 Tahun 2021
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           QUESTION BANK: LIMBAH B3 (15 COMPREHENSIVE QUESTIONS FOR SMK)
+           ========================================================================== */
+        const questionBank = [
+            // 1. Pengertian Limbah B3
+            {
+                category: "Pengertian B3",
+                question: "Limbah B3 diartikan sebagai zat, energi, atau komponen yang karena sifat, konsentrasi, atau jumlahnya dapat mencemarkan dan membahayakan lingkungan hidup.",
+                answer: true,
+                explanation: "Sesuai PP No. 22 Tahun 2021, Limbah B3 adalah sisa suatu usaha/kegiatan yang mengandung B3 yang karena sifat, konsentrasi, dan/atau jumlahnya dapat mencemari/merusak lingkungan hidup serta membahayakan kesehatan manusia."
+            },
+            {
+                category: "Pengertian B3",
+                question: "Semua jenis limbah cair dari dapur rumah tangga secara otomatis dikategorikan sebagai Limbah B3.",
+                answer: false,
+                explanation: "Limbah cair rumah tangga biasa umumnya dikategorikan sebagai Limbah Domestik (non-B3), kecuali mengandung bahan kimia berbahaya seperti sisa pembersih keras atau cat pelarut beracun."
+            },
+            
+            // 2. Klasifikasi Sumber
+            {
+                category: "Klasifikasi B3",
+                question: "Limbah B3 dari sumber tidak spesifik berasal dari kegiatan utama/proses industri inti, bukan dari kegiatan pemeliharaan alat.",
+                answer: false,
+                explanation: "Limbah B3 dari sumber TIDAK SPESIFIK berasal bukan dari proses utamanya, melainkan dari kegiatan pendukung seperti pemeliharaan alat, pencucian, pelumasan (contoh: oli bekas mesin, pelarut terhalogenasi)."
+            },
+            {
+                category: "Klasifikasi B3",
+                question: "Bahan kimia yang kadaluwarsa, tumpahan B3, dan bekas kemasan B3 termasuk dalam salah satu kategori pengelompokan Limbah B3.",
+                answer: true,
+                explanation: "Benar. Berdasarkan PP No. 22 Tahun 2021, limbah B3 dikategorikan menjadi: Sumber Tidak Spesifik, Sumber Spesifik (Umum & Khusus), serta Bahan Kimia Kadaluwarsa/Tumpahan/Bekas Kemasan."
+            },
+
+            // 3. Simbol & Karakteristik
+            {
+                category: "Simbol & Karakteristik",
+                question: "Simbol limbah B3 dengan gambar ledakan menunjukkan bahwa limbah tersebut memiliki karakteristik 'Mudah Menyala' (Flammable).",
+                answer: false,
+                explanation: "Gambar ledakan menandakan karakteristik 'Mudah Meledak' (Explosive). Karakteristik 'Mudah Menyala' disimbolkan dengan gambar nyala api."
+            },
+            {
+                category: "Simbol & Karakteristik",
+                question: "Limbah Korosif adalah limbah yang memiliki pH sama dengan atau kurang dari 2, atau sama dengan atau lebih dari 12,5.",
+                answer: true,
+                explanation: "Benar. Karakteristik korosif pada limbah B3 ditandai dengan tingkat keasaman ekstrem (pH ≤ 2 untuk asam kuat, atau pH ≥ 12.5 untuk basa kuat) yang dapat menyebabkan iritasi parah atau mengikis logam."
+            },
+            {
+                category: "Simbol & Karakteristik",
+                question: "Simbol B3 berupa lingkaran dengan tiga daun berbentuk sabit (trefoil hazard) merupakan simbol untuk karakteristik Limbah Infeksius.",
+                answer: true,
+                explanation: "Benar. Simbol Biohazard / Infeksius ditandai dengan tiga bentuk sabit melingkar. Umumnya berasal dari limbah medis rumah sakit atau laboratorium biologi."
+            },
+            {
+                category: "Simbol & Karakteristik",
+                question: "Limbah Reaktif adalah limbah yang pada keadaan standar mudah meledak atau bereaksi hebat jika bercampur dengan air/udara.",
+                answer: true,
+                explanation: "Limbah reaktif sangat labil, mudah mengalami perubahan kimiawi yang melepaskan gas beracun atau meledak ketika kontak dengan air, udara, atau tekanan tinggi."
+            },
+
+            // 4. Alur & Prosedur Pengolahan Limbah B3
+            {
+                category: "Alur Pengolahan B3",
+                question: "Hierarki pengelolaan limbah B3 menetapkan bahwa kegiatan Penimbunan (Landfill) harus didahulukan daripada Pengurangan dan Pemanfaatan.",
+                answer: false,
+                explanation: "Salah! Hierarki teratas pengelolaan B3 adalah PENGURANGAN (Reduksi) di sumber, diikuti Pemanfaatan/Daur Ulang, Pengolahan, dan pilihan terakhir adalah Penimbunan (Landfill)."
+            },
+            {
+                category: "Alur Pengolahan B3",
+                question: "Setiap TPS (Tempat Penyimpanan Sementara) Limbah B3 wajib memiliki izin resmi dan dilengkapi simbol/label yang sesuai jenis limbah.",
+                answer: true,
+                explanation: "Penyimpanan Limbah B3 di sarana industri wajib memenuhi persyaratan bangunan, standar K3, dilengkapi wadah bersimbol B3, dan tercatat dalam dokumen logbook Rincian Teknis/Izin."
+            },
+            {
+                category: "Alur Pengolahan B3",
+                question: "Pengangkutan (Transportasi) limbah B3 keluar dari area pabrik boleh dilakukan menggunakan truk angkut umum tanpa dokumen Manifest B3.",
+                answer: false,
+                explanation: "Pengangkutan Limbah B3 wajib menggunakan kendaraan berizin resmi dari Kemenhub/KLHK dan wajib disertai Dokumen Manifest Limbah B3 (Festronik) untuk pelacakan legalitas."
+            },
+            {
+                category: "Alur Pengolahan B3",
+                question: "Insinerasi (Incineration) adalah salah satu metode pengolahan limbah B3 dengan pemusnahan termal pada suhu tinggi.",
+                answer: true,
+                explanation: "Benar. Insinerator digunakan untuk membakar limbah B3 (seperti limbah medis/infeksius) pada suhu tinggi (800°C - 1200°C) hingga terurai menjadi abu dan gas aman."
+            },
+            {
+                category: "Alur Pengolahan B3",
+                question: "Proses Stabilisasi/Solidifikasi pada limbah B3 bertujuan untuk mencampur limbah dengan semen/bahan pengikat agar racun tidak mudah larut ke tanah.",
+                answer: true,
+                explanation: "Solidifikasi merubah fisik dan sifat kimia limbah B3 dengan menambahkan semen/fly ash sehingga mengunci (immobilisasi) polutan beracun sebelum ditimbun di Secure Landfill."
+            },
+            {
+                category: "Simbol & Karakteristik",
+                question: "Simbol B3 dengan gambar pohon kering dan ikan mati menandakan bahaya beracun langsung bagi manusia saja.",
+                answer: false,
+                explanation: "Simbol pohon kering & ikan mati secara khusus menandakan 'Berbahaya bagi Lingkungan' (Ecotoxic / Dangerous for the Environment), yaitu merusak ekosistem akuatik dan perairan."
+            },
+            {
+                category: "Pengertian B3",
+                question: "Limbah aki/baterai bekas kendaraan bermotor dikategorikan sebagai Limbah B3 karena mengandung logam berat seperti Timbal (Pb) dan Asam Sulfat.",
+                answer: true,
+                explanation: "Aki bekas mengandung elektrolit asam korosif dan timbal (Pb) beracun, sehingga tergolong Limbah B3 yang wajib dikelola secara khusus."
+            }
+        ];
+
+        /* ==========================================================================
+           GAME STATE MANAGEMENT
+           ========================================================================== */
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let timerInterval = null;
+        let timeLeft = 15;
+        let gameMode = 'camera'; // 'camera' or 'manual'
+        let playerName = '';
+        let isAudioMuted = false;
+
+        // Camera Motion Detection Variables
+        let videoElement = null;
+        let canvasElement = null;
+        let canvasCtx = null;
+        let lastFrameData = null;
+        let motionDetectionInterval = null;
+        let cameraAnswerDebounce = false;
+
+        /* ==========================================================================
+           AUDIO SYNTHESIZER (WEB AUDIO API)
+           ========================================================================== */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function playSound(type) {
+            if (isAudioMuted) return;
+            try {
+                if (!audioCtx) audioCtx = new AudioContext();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.exponentialRampToValueAtTime(659.25, audioCtx.currentTime + 0.15); // E5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                    osc.frequency.setValueAtTime(130.81, audioCtx.currentTime + 0.15); // C3
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'tick') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.05);
+                }
+            } catch (e) {
+                console.log("Audio play error", e);
+            }
+        }
+
+        function toggleAudio() {
+            isAudioMuted = !isAudioMuted;
+            const soundIcon = document.getElementById('soundIcon');
+            if (isAudioMuted) {
+                soundIcon.className = "fa-solid fa-volume-xmark text-rose-400";
+            } else {
+                soundIcon.className = "fa-solid fa-volume-high";
+            }
+        }
+
+        /* ==========================================================================
+           GAME LOGIC & LIFECYCLE
+           ========================================================================== */
+        function startGame(e) {
+            e.preventDefault();
+            playerName = document.getElementById('playerName').value.trim() || 'Siswa SMK';
+            gameMode = document.querySelector('input[name="gameMode"]:checked').value;
+
+            // Shuffle questions
+            currentQuestions = [...questionBank].sort(() => Math.random() - 0.5);
+            currentIndex = 0;
+            score = 0;
+            correctCount = 0;
+
+            // Update UI Views
+            document.getElementById('landingView').classList.add('hidden');
+            document.getElementById('resultView').classList.add('hidden');
+            document.getElementById('gameView').classList.remove('hidden');
+
+            document.getElementById('displayPlayerName').innerText = playerName;
+
+            // Initialize Camera Mode or Manual Mode
+            const cameraContainer = document.getElementById('cameraViewContainer');
+            if (gameMode === 'camera') {
+                cameraContainer.classList.remove('hidden');
+                initWebcam();
+            } else {
+                cameraContainer.classList.add('hidden');
+            }
+
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentIndex >= currentQuestions.length) {
+                endGame();
+                return;
+            }
+
+            cameraAnswerDebounce = false;
+            const q = currentQuestions[currentIndex];
+
+            // Update Dashboard
+            document.getElementById('displayProgress').innerText = `Soal ${currentIndex + 1} / ${currentQuestions.length}`;
+            document.getElementById('displayScore').innerText = `${score} Poin`;
+            document.getElementById('questionCategory').innerText = `Kat: ${q.category}`;
+            document.getElementById('questionText').innerText = q.question;
+
+            // Reset & Start Timer
+            resetTimer();
+
+            // Render Icons or Visuals based on Question category
+            const symbolBox = document.getElementById('symbolBox');
+            const symbolIconContainer = document.getElementById('symbolIconContainer');
+            const symbolCaption = document.getElementById('symbolCaption');
+
+            if (q.category === "Simbol & Karakteristik") {
+                symbolBox.classList.remove('hidden');
+                if (q.question.includes("ledakan")) {
+                    symbolIconContainer.innerHTML = `<i class="fa-solid fa-burst text-amber-500"></i>`;
+                    symbolCaption.innerText = "Karakteristik Meledak";
+                } else if (q.question.includes("Korosif")) {
+                    symbolIconContainer.innerHTML = `<i class="fa-solid fa-vial-virus text-purple-400"></i>`;
+                    symbolCaption.innerText = "Karakteristik Korosif (Asam/Basa)";
+                } else if (q.question.includes("Infeksius")) {
+                    symbolIconContainer.innerHTML = `<i class="fa-solid fa-biohazard text-amber-400"></i>`;
+                    symbolCaption.innerText = "Simbol Biohazard / Infeksius";
+                } else if (q.question.includes("pohon kering")) {
+                    symbolIconContainer.innerHTML = `<i class="fa-solid fa-tree text-emerald-600"></i>`;
+                    symbolCaption.innerText = "Bahaya Bagi Lingkungan";
+                } else {
+                    symbolIconContainer.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400"></i>`;
+                    symbolCaption.innerText = "Simbol Kategori B3";
+                }
+            } else {
+                symbolBox.classList.add('hidden');
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 15;
+            const timerText = document.getElementById('timerText');
+            const timerBar = document.getElementById('timerBar');
+
+            timerText.innerText = `${timeLeft}s`;
+            timerBar.style.width = '100%';
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerText.innerText = `${timeLeft}s`;
+                timerBar.style.width = `${(timeLeft / 15) * 100}%`;
+
+                if (timeLeft <= 5 && timeLeft > 0) {
+                    playSound('tick');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    // Time Out treated as wrong answer
+                    submitAnswer(null, true);
+                }
+            }, 1000);
+        }
+
+        function submitAnswer(userAnswer, isTimeout = false) {
+            if (cameraAnswerDebounce) return;
+            cameraAnswerDebounce = true;
+            clearInterval(timerInterval);
+
+            const q = currentQuestions[currentIndex];
+            let isCorrect = (userAnswer === q.answer) && !isTimeout;
+
+            if (isCorrect) {
+                score += 100 + (timeLeft * 10); // Bonus points for speed
+                correctCount++;
+                playSound('correct');
+            } else {
+                playSound('wrong');
+            }
+
+            // Show Feedback Modal
+            showFeedbackModal(isCorrect, isTimeout, q);
+        }
+
+        function showFeedbackModal(isCorrect, isTimeout, q) {
+            const modal = document.getElementById('feedbackModal');
+            const iconBox = document.getElementById('feedbackIconBox');
+            const icon = document.getElementById('feedbackIcon');
+            const title = document.getElementById('feedbackTitle');
+            const explanation = document.getElementById('feedbackExplanation');
+
+            if (isTimeout) {
+                iconBox.className = "w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+                icon.className = "fa-solid fa-hourglass-end";
+                title.innerText = "Waktu Habis!";
+                title.className = "text-lg font-bold text-amber-400";
+            } else if (isCorrect) {
+                iconBox.className = "w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+                icon.className = "fa-solid fa-check";
+                title.innerText = "Jawaban BENAR! (+Poin)";
+                title.className = "text-lg font-bold text-emerald-400";
+            } else {
+                iconBox.className = "w-12 h-12 rounded-xl flex items-center justify-center text-2xl font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30";
+                icon.className = "fa-solid fa-xmark";
+                title.innerText = "Jawaban KURANG TEPAT";
+                title.className = "text-lg font-bold text-rose-400";
+            }
+
+            explanation.innerHTML = `
+                <div class="mb-2 font-semibold text-white">Jawaban Seharusnya: <span class="${q.answer ? 'text-emerald-400' : 'text-rose-400'}">${q.answer ? 'BENAR' : 'SALAH'}</span></div>
+                <div class="text-xs text-slate-300 leading-relaxed">${q.explanation}</div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+            currentIndex++;
+            loadQuestion();
+        }
+
+        function endGame() {
+            stopWebcam();
+            document.getElementById('gameView').classList.add('hidden');
+            document.getElementById('resultView').classList.remove('hidden');
+
+            const totalQ = currentQuestions.length;
+            const accuracy = Math.round((correctCount / totalQ) * 100);
+
+            document.getElementById('finalPlayerName').innerText = playerName;
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('finalAccuracy').innerText = `${accuracy}%`;
+
+            // Assessment Evaluation
+            const gradeBadge = document.getElementById('gradeBadge');
+            const gradeDesc = document.getElementById('gradeDesc');
+
+            if (accuracy >= 85) {
+                gradeBadge.innerText = "Sangat Kompeten (Ahli Limbah B3)";
+                gradeBadge.className = "text-base font-bold text-emerald-400 mb-2";
+                gradeDesc.innerText = "Luar biasa! Siswa menguasai regulasi PP No. 22/2021, simbol bahaya, serta alur teknis pengelolaan limbah B3 industri dengan sempurna.";
+            } else if (accuracy >= 65) {
+                gradeBadge.innerText = "Kompeten (Cukup Memahami)";
+                gradeBadge.className = "text-base font-bold text-amber-400 mb-2";
+                gradeDesc.innerText = "Bagus! Siswa memahami konsep dasar limbah B3, namun perlu memperdalam ingatan mengenai detail simbol dan klasifikasi sumber.";
+            } else {
+                gradeBadge.innerText = "Perlu Remedial / Review Materi";
+                gradeBadge.className = "text-base font-bold text-rose-400 mb-2";
+                gradeDesc.innerText = "Siswa disarankan membaca kembali modul mengenai karakteristik limbah B3 dan alur hirarki pengolahan dari Pengurangan hingga Penimbunan.";
+            }
+
+            saveLeaderboardScore(playerName, score, accuracy);
+        }
+
+        function restartGame() {
+            document.getElementById('resultView').classList.add('hidden');
+            document.getElementById('landingView').classList.remove('hidden');
+        }
+
+        /* ==========================================================================
+           WEBCAM & MOTION DETECTION ALGORITHM
+           ========================================================================== */
+        async function initWebcam() {
+            videoElement = document.getElementById('webcamVideo');
+            canvasElement = document.getElementById('motionCanvas');
+            canvasCtx = canvasElement.getContext('2d');
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 320, height: 240, facingMode: 'user' },
+                    audio: false
+                });
+                videoElement.srcObject = stream;
+                document.getElementById('sensorStatus').innerText = "Kamera Aktif";
+                document.getElementById('sensorStatus').className = "text-emerald-400 font-bold";
+
+                // Start Motion Detection Loop
+                motionDetectionInterval = setInterval(detectMotion, 150);
+            } catch (err) {
+                console.warn("Webcam access error:", err);
+                document.getElementById('sensorStatus').innerText = "Manual Only (Kamera Off)";
+                document.getElementById('sensorStatus').className = "text-rose-400 font-bold";
+            }
+        }
+
+        function stopWebcam() {
+            if (motionDetectionInterval) clearInterval(motionDetectionInterval);
+            if (videoElement && videoElement.srcObject) {
+                const stream = videoElement.srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+            }
+        }
+
+        function detectMotion() {
+            if (!videoElement || videoElement.paused || videoElement.ended || cameraAnswerDebounce) return;
+
+            const width = 160;
+            const height = 120;
+            canvasElement.width = width;
+            canvasElement.height = height;
+
+            canvasCtx.drawImage(videoElement, 0, 0, width, height);
+            const currentFrame = canvasCtx.getImageData(0, 0, width, height);
+
+            if (!lastFrameData) {
+                lastFrameData = currentFrame;
+                return;
+            }
+
+            let leftDiff = 0;  // Represents SALAH zone (Video Mirrored: Left in video = User Right)
+            let rightDiff = 0; // Represents BENAR zone
+
+            const data = currentFrame.data;
+            const prevData = lastFrameData.data;
+
+            // Pixel difference calculation
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const index = (y * width + x) * 4;
+                    // Grayscale difference
+                    const diff = Math.abs(data[index] - prevData[index]);
+
+                    if (diff > 35) { // Sensitivity threshold
+                        if (x < width / 2) {
+                            leftDiff++;
+                        } else {
+                            rightDiff++;
+                        }
+                    }
+                }
+            }
+
+            lastFrameData = currentFrame;
+
+            const threshold = 600; // Motion pixel threshold
+            const leftZone = document.getElementById('leftZone');
+            const rightZone = document.getElementById('rightZone');
+
+            // Visual indicator on camera feed
+            if (leftDiff > threshold && leftDiff > rightDiff * 1.5) {
+                leftZone.classList.add('bg-rose-500/30');
+                rightZone.classList.remove('bg-emerald-500/30');
+                document.getElementById('motionDetectorVal').innerText = "Gerakan: SALAH (Kiri)";
+                
+                // Trigger answer SALAH (false)
+                submitAnswer(false);
+            } else if (rightDiff > threshold && rightDiff > leftDiff * 1.5) {
+                rightZone.classList.add('bg-emerald-500/30');
+                leftZone.classList.remove('bg-rose-500/30');
+                document.getElementById('motionDetectorVal').innerText = "Gerakan: BENAR (Kanan)";
+
+                // Trigger answer BENAR (true)
+                submitAnswer(true);
+            } else {
+                leftZone.classList.remove('bg-rose-500/30');
+                rightZone.classList.remove('bg-emerald-500/30');
+                document.getElementById('motionDetectorVal').innerText = "Sinyal: Siap...";
+            }
+        }
+
+        /* ==========================================================================
+           LEADERBOARD & LOCAL STORAGE
+           ========================================================================== */
+        function saveLeaderboardScore(name, scoreVal, accuracyVal) {
+            let leaderboard = JSON.parse(localStorage.getItem('b3_game_leaderboard') || '[]');
+            leaderboard.push({
+                name: name,
+                score: scoreVal,
+                accuracy: accuracyVal,
+                date: new Date().toLocaleDateString('id-ID')
+            });
+
+            // Sort by highest score
+            leaderboard.sort((a, b) => b.score - a.score);
+            // Keep top 36 entries (for class size)
+            leaderboard = leaderboard.slice(0, 36);
+
+            localStorage.setItem('b3_game_leaderboard', JSON.stringify(leaderboard));
+        }
+
+        function showLeaderboardModal() {
+            const modal = document.getElementById('leaderboardModal');
+            const list = document.getElementById('leaderboardList');
+            let leaderboard = JSON.parse(localStorage.getItem('b3_game_leaderboard') || '[]');
+
+            if (leaderboard.length === 0) {
+                list.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Belum ada skor tersimpan dari siswa.</p>`;
+            } else {
+                list.innerHTML = leaderboard.map((item, idx) => `
+                    <div class="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+                        <div class="flex items-center space-x-3">
+                            <span class="w-6 h-6 rounded-full font-bold flex items-center justify-center ${idx === 0 ? 'bg-amber-500 text-slate-950' : idx === 1 ? 'bg-slate-300 text-slate-950' : idx === 2 ? 'bg-amber-700 text-white' : 'bg-slate-800 text-slate-400'}">${idx + 1}</span>
+                            <div>
+                                <div class="font-bold text-white">${escapeHtml(item.name)}</div>
+                                <div class="text-[10px] text-slate-500">${item.date} | Akurasi ${item.accuracy}%</div>
+                            </div>
+                        </div>
+                        <div class="font-black text-emerald-400 text-sm">${item.score} pts</div>
+                    </div>
+                `).join('');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeLeaderboardModal() {
+            document.getElementById('leaderboardModal').classList.add('hidden');
+        }
+
+        function clearLeaderboard() {
+            if (confirm("Apakah Anda yakin ingin menghapus seluruh riwayat papan skor kelas?")) {
+                localStorage.removeItem('b3_game_leaderboard');
+                showLeaderboardModal();
+            }
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
